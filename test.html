@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="<%= I18n.locale %>" ng-app="application" class="app" ng-strict-di>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <title><%=Setting.get('fablab_name')%></title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href='https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@300;400;600;700&display=swap' rel='stylesheet'>
+  
+  <% if Rails.env.staging? && Rails.application.secrets.enable_in_context_translation %>
+    <script type="text/javascript">
+      var _jipt = [];
+      _jipt.push(['project', 'fab-manager']);
+    </script>
+    <script type="text/javascript" src="//cdn.crowdin.com/jipt/jipt.js"></script>
+  <% end %>
+
+  <% if Setting.get('payzen_endpoint') %>
+    <% endpoint = Setting.get('payzen_endpoint') %>
+    <%=stylesheet_link_tag "#{endpoint}/static/js/krypton-client/V4.0/ext/classic-reset.css" %>
+    <%=javascript_include_tag "#{endpoint}/static/js/krypton-client/V4.0/ext/classic.js" %>
+    <% if Rails.env.development? %>
+      <%=javascript_include_tag "#{endpoint}/static/js/krypton-client/V4.0/ext/classic.js.map" %>
+    <% end %>
+  <% end %>
+
+  <script type="text/javascript">
+      var Fablab = Fablab || {};
+
+      Fablab.machinesModule = ('<%= Setting.get('machines_module') %>' === 'true');
+      Fablab.plansModule = ('<%= Setting.get('plans_module') %>' === 'true');
+      Fablab.spacesModule = ('<%= Setting.get('spaces_module') %>' === 'true');
+      Fablab.trainingsModule = ('<%= Setting.get('trainings_module') %>' === 'true');
+      Fablab.storeModule = ('<%= Setting.get('store_module') %>' === 'true');
+      Fablab.walletModule = ('<%= Setting.get('wallet_module') %>' === 'true');
+      Fablab.publicAgendaModule = ('<%= Setting.get('public_agenda_module') %>' === 'true');
+      Fablab.statisticsModule = ('<%= Setting.get('statistics_module') %>' === 'true');
+      Fablab.defaultHost = "<%= Rails.application.secrets.default_host %>";
+      Fablab.trackingId = "<%= Setting.get('tracking_id') %>";
+      Fablab.adminSysId = parseInt("<%= User.adminsys&.id %>", 10);
+      Fablab.activeProviderType = "<%= AuthProvider.active&.providable_type %>";
+      Fablab.storeHidden = ('<%= Setting.get('store_hidden') %>' === 'true');
+
+      // i18n stuff
+      Fablab.locale = "<%= Rails.application.secrets.app_locale %>";
+      Fablab.moment_locale = "<%= Rails.application.secrets.moment_locale %>";
+      Fablab.summernote_locale = "<%= Rails.application.secrets.summernote_locale %>";
+      Fablab.fullcalendar_locale = "<%= Rails.application.secrets.fullcalendar_locale %>";
+      Fablab.intl_locale = "<%= Rails.application.secrets.intl_locale %>";
+      Fablab.intl_currency = "<%= Rails.application.secrets.intl_currency %>";
+      Fablab.timezone = "<%= Time.zone.tzinfo.name %>";
+      Fablab.timezone_offset = "<%= Time.zone.formatted_offset %>";
+      Fablab.translations = {
+        app: {
+          shared: {
+            buttons: <%= I18n.t('app.shared.buttons').to_json.html_safe %>,
+            messages: <%= I18n.t('app.shared.messages').to_json.html_safe %>
+          }
+        }
+      };
+      Fablab.weekStartingDay = <%= Date.parse(Rails.application.secrets.week_starting_day).strftime('%w') %>;
+      Fablab.d3DateFormat = "<%= Rails.application.secrets.d3_date_format %>";
+      Fablab.uibDateFormat = "<%= Rails.application.secrets.uib_date_format %>";
+      Fablab.maxSupportingDocumentFileSize = <%= ENV.fetch('MAX_SUPPORTING_DOCUMENT_FILE_SIZE' ,5.megabytes.to_i) %>;
+
+      // feature tour (used when feature_tour_display = session)
+      Fablab.sessionTours = [];
+  </script>
+
+  <%= stylesheet_pack_tag 'application', 'plugins', 'printer' %>
+  <% unless Stylesheet.theme.nil? %>
+  <link rel="stylesheet" media="all" href="<%= stylesheet_path(Stylesheet.theme.id) %>-<%= Stylesheet.theme.updated_at.to_i.to_s %>.css" />
+  <%  end %>
+  <% unless Stylesheet.home_page.nil? %>
+    <link rel="stylesheet" media="all" href="<%= stylesheet_path(Stylesheet.home_page.id) %>-<%= Stylesheet.home_page.updated_at.to_i.to_s %>.css" />
+  <%  end %>
+  
+  <style>
+    :root {
+      --primary: #dd0000;
+      --primary-dark: #b10000;
+      --primary-light: #ff3333;
+      --secondary: #4a4a4a;
+      --success: #10b981;
+      --danger: #dd0000;
+      --warning: #f59e0b;
+      --bg-main: #f5f5f5;
+      --bg-card: #ffffff;
+      --text-primary: #1a1a1a;
+      --text-secondary: #6b6b6b;
+      --border: #e0e0e0;
+      --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+      --radius: 0.5rem;
+      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-main);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    .app {
+      min-height: 100vh;
+    }
+
+    .vbox {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    #top-header {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.95);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      transition: var(--transition);
+    }
+
+    .header-md {
+      height: 64px;
+      padding: 0 1.5rem;
+    }
+
+    .hbox {
+      display: flex;
+      flex: 1;
+    }
+
+    #nav.aside-md {
+      width: 260px;
+      background: linear-gradient(180deg, #dd0000 0%, #b10000 100%);
+      border-right: none;
+      box-shadow: var(--shadow-lg);
+      transition: var(--transition);
+    }
+
+    #nav.aside-md:hover {
+      width: 280px;
+    }
+
+    #content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-main);
+    }
+
+    #content-main {
+      flex: 1;
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    #cookies-modal {
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+
+    .scrollable {
+      overflow-y: auto;
+      scroll-behavior: smooth;
+    }
+
+    .scrollable::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .scrollable::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .scrollable::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    .scrollable::-webkit-scrollbar-thumb:hover {
+      background: var(--secondary);
+    }
+
+    .app-generator {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--bg-card);
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      border: 1px solid var(--border);
+      transition: var(--transition);
+      z-index: 999;
+    }
+
+    .app-generator:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    }
+
+    .app-generator a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+      transition: var(--transition);
+    }
+
+    .app-generator a:hover {
+      color: var(--primary-dark);
+    }
+
+    .app-version {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.375rem;
+      transition: var(--transition);
+    }
+
+    .app-version:hover {
+      background: var(--bg-main);
+    }
+
+    .app-version i {
+      font-size: 1.125rem;
+    }
+
+    .fa-question-circle {
+      color: var(--secondary);
+    }
+
+    .fa-refresh.text-info {
+      color: var(--primary) !important;
+    }
+
+    .fa-warning.text-danger {
+      color: var(--danger) !important;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    [ng-cloak] {
+      display: none !important;
+    }
+
+    @media (max-width: 768px) {
+      #nav.aside-md {
+        width: 0;
+        overflow: hidden;
+      }
+
+      #nav.aside-md.show {
+        width: 260px;
+      }
+
+      #content-main {
+        padding: 1rem;
+      }
+
+      .app-generator {
+        bottom: 1rem;
+        right: 1rem;
+        font-size: 0.75rem;
+        padding: 0.5rem 0.875rem;
+      }
+    }
+
+    @media print {
+      #nav, #top-header, .app-generator {
+        display: none !important;
+      }
+
+      #content-main {
+        padding: 0;
+      }
+    }
+  </style>
+
+  <base href="/"></base>
+
+  <% if CustomAsset.get_url('favicon-file') %>
+    <link rel="shortcut icon" type="image/x-icon" href="<%= CustomAsset.get_url('favicon-file') %>">
+    <link rel="shortcut icon" type="image/ico" href="<%= CustomAsset.get_url('favicon-file') %>">
+  <% end %>
+
+  <!-- RSS -->
+  <link rel="alternate" type="application/rss+xml" title="RSS: <%= t('app.public.projects_list.the_fablab_projects') %>" href="<%= rss_projects_path %>.xml">
+  <link rel="alternate" type="application/rss+xml" title="RSS: <%= t('app.public.events_list.the_fablab_s_events') %>" href="<%= rss_events_path %>.xml">
+
+  <!--[if lt IE 9]>
+  <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+  <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+  <![endif]-->
+</head>
+
+<body ng-controller="ApplicationController"
+      ng-init="setCurrentUser(<%= current_user ? current_user.to_json : 'null' %>)"
+      ng-cloak>
+  <div growl></div>
+
+  <%= flash_messages %>
+
+  <section class="vbox">
+
+    <header id="top-header" class="header header-md navbar navbar-fixed-top-xs">
+      <div ui-view="header"></div>
+    </header>
+
+    <section ui-view="content">
+      <section class="hbox stretch">
+        <aside id="nav" class="aside-md bg-red hidden-print" ui-view="leftnav"></aside>
+
+        <section id="content">
+          <section class="vbox">
+            <section id="cookies-modal" ui-view="cookies">
+            </section>
+            <section id="content-main" class="scrollable" ui-view="main">
+            </section>
+          </section>
+        </section>
+
+      </section>
+    </section>
+
+  </section>
+
+  <div class="app-generator">
+    <span class="app-version" uib-tooltip="{{'app.public.common.version' | translate}} {{version.current}}" ng-if="currentUser && currentUser.role == 'admin'" ng-click="versionModal()">
+      <i class="fa fa-question-circle" aria-label="Version ?" ng-show="version.up_to_date"></i>
+      <i class="fa fa-refresh text-info pointer" aria-label="Upgrade required" ng-show="!version.up_to_date && !version.security"></i>
+      <i class="fa fa-warning text-danger pointer" aria-label="Security upgrade required" ng-show="!version.up_to_date && version.security"></i>
+    </span>
+    <span class="text-sm">Powered by <a href="http://www.fab-manager.com" target="_blank">Fab-manager</a></span>
+  </div>
+
+<%= javascript_pack_tag 'application' %>
+</body>
+</html>
